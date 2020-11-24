@@ -239,6 +239,7 @@ void MainUi::on_saveWebPB_clicked()
     saveStream << global_result;
     saveFile.close();
     log("保存"+QString::number(global_result.length())+"字节到:"+savePath);
+    unfreeze();
 }
 
 void MainUi::on_saveFiltResultPB_clicked()
@@ -270,5 +271,5 @@ void MainUi::on_saveFiltResultPB_clicked()
     saveStream << saveData;
     saveFile.close();
     log("保存"+QString::number(saveData.length())+"字节到:"+savePath);
-
+    unfreeze();
 }
