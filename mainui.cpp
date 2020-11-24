@@ -53,15 +53,19 @@ void MainUi::initUi()
 
     ui->logLE->setEnabled(false);
     ui->logLE->setContextMenuPolicy(Qt::NoContextMenu);
-    ui->useRegExpChB->setChecked(true);
+    ui->useRegExpFilterRB->setChecked(true);
     ui->resultTE->setReadOnly(true);
     ui->filterResultTE->setReadOnly(true);
+    ui->importFilterLE->setReadOnly(true);
 
-    addFreeze(ui->useRegExpChB);
+    addFreeze(ui->useRegExpFilterRB);
+    addFreeze(ui->usedFindFilterRB);
+    addFreeze(ui->useImportFilterRB);
     addFreeze(ui->startWebCatchPB);
     addFreeze(ui->refiltPB);
     addFreeze(ui->saveWebPB);
     addFreeze(ui->saveFiltResultPB);
+    addFreeze(ui->importWebPB);
 
     log("就绪");
 }
@@ -74,6 +78,7 @@ void MainUi::log(QString l)
 void MainUi::filt_regexp(QString content)
 {
     if(ui->filterLE->text().isEmpty()){
+        log("正则为空");
         return;
     }
     QStringList filterResult;
@@ -105,6 +110,58 @@ void MainUi::filt_regexp(QString content)
     }
     ui->filterResultTE->setText(filterResult.join("\n"));
 }
+
+void MainUi::filt_find(QString content)
+{
+    if(ui->filterLE->text().isEmpty()){
+        log("规则为空");
+        return;
+    }
+
+    QString re(ui->prefixFilterLE->text() + ui->filterLE->text() + ui->suffixFilterLE->text());
+
+    // 筛抓到的文本，先筛带前后缀的，需要筛的内容只有一条，只
+    int match;
+    match = content.indexOf(re);
+    if(match != -1){
+        // 再筛去前后缀，只留内容
+        ui->filterResultTE->setText("含有" + re);
+    }
+    else{
+        ui->filterResultTE->setText("不含" + re);
+    }
+}
+
+void MainUi::filt_file(QString content)
+{
+    ui->filterResultTE->clear();
+
+    QStringList filterResult;
+
+    if(inFilter.isEmpty()){
+        log("规则为空");
+        return;
+    }
+    if(global_result.isEmpty()){
+        log("尚未抓取");
+        return;
+    }
+
+    int match = -1;
+    QStringList filters = inFilter.replace("\r", "").split("\n");
+    foreach(QString filter, filters){
+        if(filter.isEmpty()){
+            // 跳过空文本
+            continue;
+        }
+        match = content.indexOf(filter);
+        if(match != -1){
+            filterResult.append(filter);
+        }
+    }
+    ui->filterResultTE->append(filterResult.join("\n"));
+}
+
 
 void MainUi::on_startWebCatchPB_clicked()
 {
@@ -143,9 +200,6 @@ void MainUi::checkResult(QString result, QString error)
     // filterResult存放最终的内容
     global_result = result;
     if(global_result.isEmpty()){
-        // 出错时返回枚举类型
-//        QMetaEnum a = QMetaEnum::fromType<QNetworkReply::NetworkError>();
-//        log(a.valueToKey(error));
         log(error);
         return;
     }
@@ -167,17 +221,26 @@ void MainUi::checkResult(QString result, QString error)
             global_urlName = "Web";
         }
     }
-    if(ui->useRegExpChB->isChecked()){
-        // 用正则筛
-        filt_regexp(result);
-    }
-    else{
-        // 不用正则筛
-
-    }
     ui->resultTE->setPlainText(result);
 
+    checkWork(result);
     log("完成");
+}
+
+void MainUi::checkWork(QString content)
+{
+    if(ui->useRegExpFilterRB->isChecked()){
+        // 用正则筛
+        filt_regexp(content);
+    }
+    else if(ui->usedFindFilterRB->isChecked()){
+        // 直接筛内容
+        filt_find(content);
+    }
+    else{
+        // 筛文件内容，一行一条。
+        filt_file(content);
+    }
 }
 
 void MainUi::on_refiltPB_clicked()
@@ -188,7 +251,8 @@ void MainUi::on_refiltPB_clicked()
         unfreeze();
         return;
     }
-    filt_regexp(global_result);
+
+    checkWork(global_result);
     unfreeze();
 }
 
@@ -272,4 +336,69 @@ void MainUi::on_saveFiltResultPB_clicked()
     saveFile.close();
     log("保存"+QString::number(saveData.length())+"字节到:"+savePath);
     unfreeze();
+}
+
+void MainUi::on_importFilterPB_clicked()
+{
+    freeze();
+    QString fileFilter = QFileDialog::getOpenFileName(this, "导入文件内容", "", "文本文件(*.txt)");
+    if(fileFilter.isEmpty()){
+        unfreeze();
+        return;
+    }
+
+    QFile fin;
+    QTextStream inStream;
+    fin.setFileName(fileFilter);
+    if(!fin.open(QIODevice::ReadOnly)){
+        log("文件无法打开");
+        unfreeze();
+        return;
+    }
+    inStream.setDevice(&fin);
+    inFilter = inStream.readAll();
+    fin.close();
+    if(inFilter.isEmpty()){
+        log("规则为空");
+        unfreeze();
+        return;
+    }
+    ui->importFilterLE->setText(fileFilter);
+//    global_url = fileFilter;
+//    global_urlName = QFileInfo(fileFilter).baseName();
+    unfreeze();
+}
+
+void MainUi::on_importWebPB_clicked()
+{
+    freeze();
+    QString importFile = QFileDialog::getOpenFileName(this, "导入文件内容", "", "文本文件(*.txt)");
+    if(importFile.isEmpty()){
+        unfreeze();
+        return;
+    }
+
+    QFile fin;
+    QTextStream inStream;
+    fin.setFileName(importFile);
+    if(!fin.open(QIODevice::ReadOnly)){
+        log("文件无法打开");
+        unfreeze();
+        return;
+    }
+    inStream.setDevice(&fin);
+    QString inString = inStream.readAll();
+    fin.close();
+    if(inString.isEmpty()){
+        log("导入文件为空");
+        unfreeze();
+        return;
+    }
+    global_result = inString;
+    global_url = importFile;
+    global_urlName = QFileInfo(importFile).baseName();
+    ui->resultTE->setPlainText(inString);
+    ui->webUrlLE->setText(importFile);
+    unfreeze();
+
 }
