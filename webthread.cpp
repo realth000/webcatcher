@@ -1,5 +1,7 @@
 ﻿#include "webthread.h"
 #include <QEventLoop>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 #if _MSC_VER >= 1600
 #pragma execution_character_set("utf-8")
@@ -22,9 +24,15 @@ void WebThread::getWeb()
     QNetworkRequest request;
     request.setUrl(QUrl(_url));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+
+    if(manager->networkAccessible() == QNetworkAccessManager::NotAccessible){
+        manager->setNetworkAccessible(QNetworkAccessManager::Accessible);
+    }
+
     QNetworkReply *reply = manager->get(request);
+
     loop.exec();
 
-    emit result(reply->readAll());
+    emit result(reply->readAll(), reply->errorString());
     emit webThreadFinish();
 }

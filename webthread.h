@@ -1,8 +1,7 @@
 ﻿#ifndef WEBTHREAD_H
 #define WEBTHREAD_H
 #include <QThread>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
+
 
 class WebThread : public QThread
 {
@@ -13,7 +12,7 @@ public:
 signals:
     void log(QString);
     void webThreadFinish();
-    void result(QString);
+    void result(QString, QString);
 
 public slots:
     void getWeb();

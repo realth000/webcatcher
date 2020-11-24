@@ -36,7 +36,7 @@ private:
     void addFreeze(QWidget *w);
     void freeze();
     void unfreeze();
-    void checkResult(QString result);
+    void checkResult(QString result, QString error);
 
 };
 #endif // MAINUI_H

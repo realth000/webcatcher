@@ -11,6 +11,8 @@
 #include <QUrl>
 #include <QRegularExpression>
 #include <QFileDialog>
+#include <QMetaEnum>
+#include <QDateTime>
 
 #if _MSC_VER >= 1600
 #pragma execution_character_set("utf-8")
@@ -124,7 +126,7 @@ void MainUi::on_startWebCatchPB_clicked()
     WebThread *wth = new WebThread(url);
     connect(wth, &WebThread::log, this, &MainUi::log);
     connect(wth, &WebThread::webThreadFinish, wth, &WebThread::deleteLater);
-    connect(wth, &WebThread::result, this, [=](QString result){checkResult(result);unfreeze();});
+    connect(wth, &WebThread::result, this, [=](QString result, QString error){checkResult(result, error);unfreeze();});
     QThread *workThread = new QThread;
     connect(workThread, &QThread::started, wth, &WebThread::getWeb);
     connect(wth, &WebThread::destroyed, workThread, &QThread::quit);
@@ -136,10 +138,17 @@ void MainUi::on_startWebCatchPB_clicked()
     log("爬取中");
 }
 
-void MainUi::checkResult(QString result)
+void MainUi::checkResult(QString result, QString error)
 {
     // filterResult存放最终的内容
     global_result = result;
+    if(global_result.isEmpty()){
+        // 出错时返回枚举类型
+//        QMetaEnum a = QMetaEnum::fromType<QNetworkReply::NetworkError>();
+//        log(a.valueToKey(error));
+        log(error);
+        return;
+    }
     QStringList filterResult;
 
     QRegularExpression re_title("<title>.*?</title>");

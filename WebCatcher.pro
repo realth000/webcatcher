@@ -2,7 +2,7 @@ QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-VERSION = 1.0
+VERSION = 1.1
 RC_ICONS = WebCatcher.ico
 
 CONFIG += c++11
