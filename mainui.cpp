@@ -84,8 +84,11 @@ void MainUi::filt_regexp(QString content)
     QStringList filterResult;
     int endLength = content.length();
     int index = 0;
+    QRegularExpression re_pre(ui->prefixFilterLE->text());
     QRegularExpression re(ui->prefixFilterLE->text() + ui->filterLE->text() + ui->suffixFilterLE->text());
+    qDebug() << re;
     QRegularExpression re_filter(ui->filterLE->text());
+    qDebug() << re_filter;
     QRegularExpressionMatch match;
     QRegularExpressionMatch match_filter;
 
@@ -95,9 +98,11 @@ void MainUi::filt_regexp(QString content)
         if(match.hasMatch()){
             index = match.capturedEnd();
             // 再筛去前后缀，只留内容
-            match_filter = re_filter.match(match.captured());
+            match_filter = re_filter.match(match.captured().replace(re_pre, ""));
             if(match.hasMatch()){
                 filterResult.append(match_filter.captured());
+                ui->filterResultTE->insertPlainText("《" + match_filter.captured() + "》");
+                ui->filterResultTE->insertPlainText("\n");
             }
             else{
                 // 这里是筛到了前缀 + 内容 + 后缀，但从中筛不出内容的情况，不应该
@@ -108,7 +113,6 @@ void MainUi::filt_regexp(QString content)
             break;
         }
     }
-    ui->filterResultTE->setText(filterResult.join("\n"));
 }
 
 void MainUi::filt_find(QString content)
@@ -159,7 +163,10 @@ void MainUi::filt_file(QString content)
             filterResult.append(filter);
         }
     }
-    ui->filterResultTE->append(filterResult.join("\n"));
+//    ui->filterResultTE->append(filterResult.join("\n"));
+    ui->filterResultTE->insertPlainText(filterResult.join("\n"));
+    ui->filterResultTE->insertPlainText("\n");
+    qDebug() << filterResult.join("\n");
 }
 
 
@@ -245,6 +252,7 @@ void MainUi::checkWork(QString content)
 
 void MainUi::on_refiltPB_clicked()
 {
+    ui->filterResultTE->clear();
     freeze();
     if(global_result.isEmpty()){
         log("未抓取");
@@ -341,7 +349,7 @@ void MainUi::on_saveFiltResultPB_clicked()
 void MainUi::on_importFilterPB_clicked()
 {
     freeze();
-    QString fileFilter = QFileDialog::getOpenFileName(this, "导入文件内容", "", "文本文件(*.txt)");
+    QString fileFilter = QFileDialog::getOpenFileName(this, "导入文件内容", "", "所有文件(*.*);;网页文件(*.html);;文本文件(*.txt)");
     if(fileFilter.isEmpty()){
         unfreeze();
         return;
@@ -372,7 +380,7 @@ void MainUi::on_importFilterPB_clicked()
 void MainUi::on_importWebPB_clicked()
 {
     freeze();
-    QString importFile = QFileDialog::getOpenFileName(this, "导入文件内容", "", "文本文件(*.txt)");
+    QString importFile = QFileDialog::getOpenFileName(this, "导入文件内容", "", "所有文件(*.*);;网页文件(*.html);;文本文件(*.txt)");
     if(importFile.isEmpty()){
         unfreeze();
         return;
@@ -387,6 +395,7 @@ void MainUi::on_importWebPB_clicked()
         return;
     }
     inStream.setDevice(&fin);
+    inStream.setCodec("UTF-8");
     QString inString = inStream.readAll();
     fin.close();
     if(inString.isEmpty()){

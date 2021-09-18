@@ -1,8 +1,15 @@
-﻿http://www.baidu.com/
-https://www.csdn.net/
-https://www.dlsite.com/maniax/ranking/2018?category=voice
-https://www.dlsite.com/maniax/ranking/2018?category=voice&page=2
-id/RJ[0-9]*\.html" id
-id/
-RJ[0-9]*
-\.html" id
+﻿changelog
+
+0918：
+1. 修复了解析html标签错误导致获取筛选结果错误的问题。
+2. 修复了匹配正则前缀错误导致获取筛选结果错误的问题。
+3. 修复了筛选结果中错误换行的问题。
+4. 修复了重复点击筛选按钮时筛选结果没有清空的问题。
+5. 放宽导入文件格式要求，现在可以以所有文件、网页文件的格式导入文本。
+6. 优化了可能出现的乱码问题。
+
+0823：
+1. 修复了导入文本内容中UTF-8编码中文乱码的问题。
+2. 修复了导入文件内容为富文本时输出显示没有换行的问题。
+3. 导入文件功能的筛选加入“所有文件”以及“html文件”
+

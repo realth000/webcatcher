@@ -1,12 +1,12 @@
-QT       += core gui network
+QT += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-VERSION = 1.3
+VERSION = 1.4
+
 RC_ICONS = WebCatcher.ico
 
-CONFIG += c++11
-CONFIG += no_batch
+CONFIG += c++11 no_batch
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
